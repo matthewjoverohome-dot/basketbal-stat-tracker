@@ -1,0 +1,724 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Spurs vs Thunder Stat Tracker</title>
+
+<style>
+*{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{margin:0;background:#363942;color:white}
+.topbar{height:52px;background:#1b1b1b;display:flex;align-items:center;padding:0 22px;font-weight:bold;font-size:17px}
+.page{width:72%;max-width:700px;margin:0 auto;background:#1f1f1f;min-height:100vh;padding:0 32px}
+.scoreboard{position:relative;padding:28px 14px;text-align:center}
+
+.game-clock{position:absolute;top:29px;right:14px;color:#88c7af;font-size:13px;font-weight:600;padding-bottom:3px;letter-spacing:.2px;line-height:1;overflow:hidden}
+.game-clock::after{content:"";position:absolute;left:0;bottom:0;height:1px;width:100%;background:#88c7af;transform-origin:left;animation:underlinePulse 1.4s ease-in-out infinite}
+@keyframes underlinePulse{0%{transform:scaleX(0);transform-origin:left}50%{transform:scaleX(1);transform-origin:left}51%{transform-origin:right}100%{transform:scaleX(0);transform-origin:right}}
+
+.league{color:#6db7ff;font-size:13px;text-align:left;margin-bottom:10px}
+.score-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 10px;margin-top:18px}
+.team{display:flex;flex-direction:column;align-items:center;gap:6px}
+.logo{width:54px;height:54px;object-fit:contain}
+.team-name{font-size:14px;font-weight:400}
+.record{color:#aaa;font-size:11px}
+.score{font-size:42px;margin:0 48px;min-width:58px;font-weight:500}
+.dash{color:#aaa;font-size:28px}
+.game-info{margin-top:18px;color:#aaa;font-size:13px}
+
+.period-table{width:100%;margin-top:20px;border-top:1px solid #444;border-bottom:1px solid #444;border-collapse:collapse;font-size:12px}
+.period-table th,.period-table td{padding:8px;text-align:center}
+.period-table th:first-child,.period-table td:first-child{text-align:left}
+
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);background:#242424;border-bottom:2px solid #000}
+.tab{padding:15px;text-align:center;color:#aaa;cursor:pointer;font-size:12px;font-weight:bold;transition:.2s}
+.tab:hover{background:#2c2c2c}
+.tab.active{color:white;border-bottom:3px solid white}
+
+.controls{padding:18px;border-bottom:1px solid #444}
+.control-title{color:#aaa;margin-bottom:14px;font-size:13px}
+.button-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+button{border:none;padding:12px;border-radius:8px;background:#30343d;color:white;font-weight:bold;cursor:pointer;transition:.2s;font-size:13px}
+button:hover{background:#444a56;transform:scale(1.03)}
+.spurs-btn{border-left:4px solid #c4ced4}
+.okc-btn{border-left:4px solid #007ac1}
+.miss-btn{opacity:.85}
+.quarter-btn{border-left:4px solid #88c7af}
+.undo-btn{border-left:4px solid #ffcc66;grid-column:span 3}
+.reset-btn{border-left:4px solid #ff5555;grid-column:span 3}
+
+.stats-section{padding:14px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{color:#aaa;font-weight:normal;border-bottom:1px solid #555;padding:9px 5px;text-align:center}
+td{border-bottom:1px solid #333;padding:10px 5px;text-align:center}
+th:first-child,td:first-child{text-align:left;min-width:155px}
+.player-name{font-weight:bold}
+.position{color:#aaa}
+
+.team-stats-box{padding:18px 0 8px}
+.team-stats-header{display:grid;grid-template-columns:1fr 1.5fr 1fr;align-items:center;margin-bottom:16px}
+.team-stats-logo{width:48px;height:48px;object-fit:contain}
+.team-stats-header div:nth-child(1){text-align:left}
+.team-stats-header div:nth-child(2){text-align:center;color:#aaa;font-size:12px}
+.team-stats-header div:nth-child(3){text-align:right}
+.team-stats-row{display:grid;grid-template-columns:1fr 1.5fr 1fr;align-items:center;padding:7px 0;font-size:14px}
+.team-stats-row div:nth-child(1){text-align:left}
+.team-stats-row div:nth-child(2){text-align:center;font-weight:500}
+.team-stats-row div:nth-child(3){text-align:right}
+.team-stats-divider{border-top:1px solid #444;margin:10px 0}
+
+@media(max-width:700px){
+  .page{width:96%;padding:0 8px}
+  .score{font-size:32px;margin:0 26px}
+  .logo{width:46px;height:46px}
+  .button-grid{grid-template-columns:repeat(2,1fr)}
+  .undo-btn,.reset-btn{grid-column:span 2}
+  .score-row{padding:0}
+}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">← Spurs vs Thunder</div>
+
+<div class="page">
+
+<section class="scoreboard">
+  <div class="game-clock">
+    <span id="quarterDisplay">Q1</span>
+    <span id="clockDisplay">12:00</span>
+  </div>
+
+  <div class="league">NBA · Live Stat Tracker</div>
+
+  <div class="score-row">
+    <div class="team">
+      <img class="logo" src="https://upload.wikimedia.org/wikipedia/en/a/a2/San_Antonio_Spurs.svg">
+      <div class="team-name">San Antonio Spurs</div>
+      <div class="record">(0 - 0)</div>
+    </div>
+
+    <div style="display:flex;align-items:center;">
+      <div class="score" id="spursScore">0</div>
+      <div class="dash">-</div>
+      <div class="score" id="okcScore">0</div>
+    </div>
+
+    <div class="team">
+      <img class="logo" src="https://upload.wikimedia.org/wikipedia/en/5/5d/Oklahoma_City_Thunder.svg">
+      <div class="team-name">Oklahoma City Thunder</div>
+      <div class="record">(0 - 0)</div>
+    </div>
+  </div>
+
+  <div class="game-info">Conference Finals · Game 1 (Series tied 0 - 0)</div>
+
+  <table class="period-table">
+    <thead>
+      <tr>
+        <th>Team</th><th>1</th><th>2</th><th>3</th><th>4</th><th>T</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>San Antonio Spurs</td>
+        <td id="spursQ1">0</td><td id="spursQ2">0</td><td id="spursQ3">0</td><td id="spursQ4">0</td>
+        <td id="spursTotalSmall">0</td>
+      </tr>
+      <tr>
+        <td>Oklahoma City Thunder</td>
+        <td id="okcQ1">0</td><td id="okcQ2">0</td><td id="okcQ3">0</td><td id="okcQ4">0</td>
+        <td id="okcTotalSmall">0</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTeam('spurs')">SPURS</div>
+  <div class="tab" onclick="showTeam('okc')">THUNDER</div>
+  <div class="tab" onclick="showTeam('all')">ALL STATS</div>
+</div>
+
+<section class="controls">
+  <div class="control-title">Select a stat and assign it to a player 🏀</div>
+
+  <div class="button-grid">
+    <button class="spurs-btn" onclick="addShot('spurs','three','make')">Spurs +3</button>
+    <button class="spurs-btn" onclick="addShot('spurs','two','make')">Spurs +2</button>
+    <button class="spurs-btn" onclick="addShot('spurs','ft','make')">Spurs FT</button>
+
+    <button class="okc-btn" onclick="addShot('okc','three','make')">Thunder +3</button>
+    <button class="okc-btn" onclick="addShot('okc','two','make')">Thunder +2</button>
+    <button class="okc-btn" onclick="addShot('okc','ft','make')">Thunder FT</button>
+
+    <button class="spurs-btn miss-btn" onclick="addShot('spurs','three','miss')">Spurs Miss 3PT</button>
+    <button class="spurs-btn miss-btn" onclick="addShot('spurs','two','miss')">Spurs Miss 2PT</button>
+    <button class="spurs-btn miss-btn" onclick="addShot('spurs','ft','miss')">Spurs Miss FT</button>
+
+    <button class="okc-btn miss-btn" onclick="addShot('okc','three','miss')">Thunder Miss 3PT</button>
+    <button class="okc-btn miss-btn" onclick="addShot('okc','two','miss')">Thunder Miss 2PT</button>
+    <button class="okc-btn miss-btn" onclick="addShot('okc','ft','miss')">Thunder Miss FT</button>
+
+    <button onclick="chooseTeamStat('orb')">Off Rebound</button>
+    <button onclick="chooseTeamStat('drb')">Def Rebound</button>
+    <button onclick="chooseTeamStat('ast')">Assist</button>
+    <button onclick="chooseTeamStat('blk')">Block</button>
+    <button onclick="chooseTeamStat('stl')">Steal</button>
+    <button onclick="chooseTeamStat('to')">Turnover</button>
+    <button onclick="chooseTeamStat('pf')">Foul</button>
+
+    <button class="quarter-btn" onclick="startNewQuarter()">Start New Quarter</button>
+    <button class="undo-btn" onclick="undoLastAction()">Undo Last Action</button>
+    <button class="reset-btn" onclick="resetAllStats()">Reset All Numbers</button>
+  </div>
+</section>
+
+<section class="stats-section" id="statsSection"></section>
+
+</div>
+
+<script>
+const SAVE_KEY = "spursThunderStatTrackerSave";
+
+let currentQuarter = 1;
+let quarterClock = "12:00";
+let undoStack = [];
+
+const quarterPoints = {
+  spurs:[0,0,0,0],
+  okc:[0,0,0,0]
+};
+
+const teamLogos = {
+  spurs:"https://upload.wikimedia.org/wikipedia/en/a/a2/San_Antonio_Spurs.svg",
+  okc:"https://upload.wikimedia.org/wikipedia/en/5/5d/Oklahoma_City_Thunder.svg"
+};
+
+const teams = {
+  spurs:[
+    "Victor Wembanyama - C",
+    "Devin Vassell - G",
+    "Keldon Johnson - F",
+    "Jeremy Sochan - F",
+    "Tre Jones - G",
+    "Stephon Castle - G",
+    "Harrison Barnes - F",
+    "Julian Champagnie - F"
+  ],
+  okc:[
+    "Shai Gilgeous-Alexander - G",
+    "Jalen Williams - F",
+    "Chet Holmgren - C",
+    "Luguentz Dort - G",
+    "Josh Giddey - G",
+    "Cason Wallace - G",
+    "Isaiah Hartenstein - C",
+    "Aaron Wiggins - G"
+  ]
+};
+
+let currentView = "spurs";
+let stats = {};
+
+function createFreshStats(){
+  const fresh = {};
+
+  for(const team in teams){
+    fresh[team] = teams[team].map(name => ({
+      name,
+      pts:0,
+      fgm:0,
+      fga:0,
+      threeM:0,
+      threeA:0,
+      ftm:0,
+      fta:0,
+      orb:0,
+      drb:0,
+      ast:0,
+      stl:0,
+      blk:0,
+      to:0,
+      pf:0
+    }));
+  }
+
+  return fresh;
+}
+
+stats = createFreshStats();
+
+function saveToBrowser(){
+  const saveData = {
+    currentQuarter,
+    quarterClock,
+    quarterPoints,
+    stats,
+    currentView
+  };
+
+  localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+}
+
+function loadFromBrowser(){
+  const savedData = localStorage.getItem(SAVE_KEY);
+
+  if(!savedData) return;
+
+  try{
+    const data = JSON.parse(savedData);
+
+    currentQuarter = data.currentQuarter ?? 1;
+    quarterClock = data.quarterClock ?? "12:00";
+    currentView = data.currentView ?? "spurs";
+
+    quarterPoints.spurs = data.quarterPoints?.spurs ?? [0,0,0,0];
+    quarterPoints.okc = data.quarterPoints?.okc ?? [0,0,0,0];
+
+    stats = data.stats ?? createFreshStats();
+  }
+  catch(error){
+    localStorage.removeItem(SAVE_KEY);
+  }
+}
+
+function resetAllStats(){
+  const confirmReset = confirm(
+    "Are you sure you want to reset all numbers? This cannot be undone."
+  );
+
+  if(!confirmReset) return;
+
+  localStorage.removeItem(SAVE_KEY);
+
+  currentQuarter = 1;
+  quarterClock = "12:00";
+  undoStack = [];
+
+  quarterPoints.spurs = [0,0,0,0];
+  quarterPoints.okc = [0,0,0,0];
+
+  stats = createFreshStats();
+  currentView = "spurs";
+
+  updateGameClock();
+  updateScore();
+  showTeam("spurs");
+}
+
+function saveState(){
+  undoStack.push({
+    currentQuarter,
+    quarterClock,
+    quarterPoints:JSON.parse(JSON.stringify(quarterPoints)),
+    stats:JSON.parse(JSON.stringify(stats)),
+    currentView
+  });
+}
+
+function undoLastAction(){
+  if(undoStack.length === 0){
+    alert("Nothing to undo.");
+    return;
+  }
+
+  const previousState = undoStack.pop();
+
+  currentQuarter = previousState.currentQuarter;
+  quarterClock = previousState.quarterClock;
+  currentView = previousState.currentView;
+
+  quarterPoints.spurs = previousState.quarterPoints.spurs;
+  quarterPoints.okc = previousState.quarterPoints.okc;
+  stats = previousState.stats;
+
+  updateGameClock();
+  updateScore();
+  showTeam(currentView);
+  saveToBrowser();
+}
+
+function updateGameClock(){
+  document.getElementById("quarterDisplay").textContent = `Q${currentQuarter}`;
+  document.getElementById("clockDisplay").textContent = quarterClock;
+}
+
+function askForNewClockTime(){
+  const newTime = prompt(
+`What is the new time left in Q${currentQuarter}?
+
+Type it like 11:35, 8:02, or 0:47.`,
+quarterClock
+  );
+
+  if(!newTime) return;
+
+  const validTime = /^([0-9]|1[0-2]):[0-5][0-9]$/.test(newTime.trim());
+
+  if(!validTime){
+    alert("Invalid time. Use format like 11:35 or 8:02.");
+    return;
+  }
+
+  quarterClock = newTime.trim();
+  updateGameClock();
+}
+
+function startNewQuarter(){
+  if(currentQuarter >= 4){
+    alert("You are already in Quarter 4.");
+    return;
+  }
+
+  saveState();
+  currentQuarter++;
+  quarterClock = "12:00";
+
+  updateGameClock();
+  updateScore();
+  saveToBrowser();
+}
+
+function showTeam(team){
+  currentView = team;
+
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.classList.remove("active");
+  });
+
+  if(team === "spurs") document.querySelectorAll(".tab")[0].classList.add("active");
+  if(team === "okc") document.querySelectorAll(".tab")[1].classList.add("active");
+  if(team === "all") document.querySelectorAll(".tab")[2].classList.add("active");
+
+  renderStatsSection();
+  saveToBrowser();
+}
+
+function renderStatsSection(){
+  if(currentView === "all"){
+    renderTeamComparison();
+  }
+  else{
+    renderPlayerTable();
+  }
+}
+
+function renderPlayerTable(){
+  const section = document.getElementById("statsSection");
+
+  section.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Player</th>
+          <th>PTS</th>
+          <th>FG</th>
+          <th>3PT</th>
+          <th>FT</th>
+          <th>REB</th>
+          <th>AST</th>
+          <th>STL</th>
+          <th>BLK</th>
+          <th>TO</th>
+          <th>PF</th>
+        </tr>
+      </thead>
+      <tbody id="statBody"></tbody>
+    </table>
+  `;
+
+  const body = document.getElementById("statBody");
+
+  stats[currentView].forEach(player => {
+    const row = document.createElement("tr");
+    const reb = player.orb + player.drb;
+
+    row.innerHTML = `
+      <td>
+        <span class="player-name">${player.name.split(" - ")[0]}</span>
+        <span class="position"> - ${player.name.split(" - ")[1]}</span>
+      </td>
+      <td>${player.pts}</td>
+      <td>${player.fgm}-${player.fga}</td>
+      <td>${player.threeM}-${player.threeA}</td>
+      <td>${player.ftm}-${player.fta}</td>
+      <td>${reb}</td>
+      <td>${player.ast}</td>
+      <td>${player.stl}</td>
+      <td>${player.blk}</td>
+      <td>${player.to}</td>
+      <td>${player.pf}</td>
+    `;
+
+    body.appendChild(row);
+  });
+}
+
+function teamTotals(team){
+  return stats[team].reduce((total,p) => {
+    total.pts += p.pts;
+    total.fgm += p.fgm;
+    total.fga += p.fga;
+    total.threeM += p.threeM;
+    total.threeA += p.threeA;
+    total.ftm += p.ftm;
+    total.fta += p.fta;
+    total.orb += p.orb;
+    total.drb += p.drb;
+    total.ast += p.ast;
+    total.stl += p.stl;
+    total.blk += p.blk;
+    total.to += p.to;
+    total.pf += p.pf;
+    return total;
+  },{
+    pts:0,fgm:0,fga:0,threeM:0,threeA:0,ftm:0,fta:0,
+    orb:0,drb:0,ast:0,stl:0,blk:0,to:0,pf:0
+  });
+}
+
+function percent(made,attempts){
+  if(attempts === 0) return "0.0";
+  return ((made / attempts) * 100).toFixed(1);
+}
+
+function renderTeamComparison(){
+  const section = document.getElementById("statsSection");
+
+  const spurs = teamTotals("spurs");
+  const okc = teamTotals("okc");
+
+  section.innerHTML = `
+    <div class="team-stats-box">
+
+      <div class="team-stats-header">
+        <div>
+          <img class="team-stats-logo" src="${teamLogos.spurs}">
+        </div>
+
+        <div>TEAM STATS</div>
+
+        <div>
+          <img class="team-stats-logo" src="${teamLogos.okc}">
+        </div>
+      </div>
+
+      <div class="team-stats-row">
+        <div>${spurs.fgm}/${spurs.fga}</div>
+        <div>Field goals</div>
+        <div>${okc.fgm}/${okc.fga}</div>
+      </div>
+
+      <div class="team-stats-row">
+        <div>${percent(spurs.fgm,spurs.fga)}</div>
+        <div>Field goal %</div>
+        <div>${percent(okc.fgm,okc.fga)}</div>
+      </div>
+
+      <div class="team-stats-row">
+        <div>${spurs.threeM}/${spurs.threeA}</div>
+        <div>3-pointers</div>
+        <div>${okc.threeM}/${okc.threeA}</div>
+      </div>
+
+      <div class="team-stats-row">
+        <div>${percent(spurs.threeM,spurs.threeA)}</div>
+        <div>3-point %</div>
+        <div>${percent(okc.threeM,okc.threeA)}</div>
+      </div>
+
+      <div class="team-stats-row">
+        <div>${spurs.ftm}/${spurs.fta}</div>
+        <div>Free throws</div>
+        <div>${okc.ftm}/${okc.fta}</div>
+      </div>
+
+      <div class="team-stats-row">
+        <div>${percent(spurs.ftm,spurs.fta)}</div>
+        <div>Free throw %</div>
+        <div>${percent(okc.ftm,okc.fta)}</div>
+      </div>
+
+      <div class="team-stats-divider"></div>
+
+      <div class="team-stats-row">
+        <div>${spurs.orb + spurs.drb}</div>
+        <div>Total rebounds</div>
+        <div>${okc.orb + okc.drb}</div>
+      </div>
+
+      <div class="team-stats-row">
+        <div>${spurs.orb}</div>
+        <div>Offensive rebounds</div>
+        <div>${okc.orb}</div>
+      </div>
+
+      <div class="team-stats-row">
+        <div>${spurs.drb}</div>
+        <div>Defensive rebounds</div>
+        <div>${okc.drb}</div>
+      </div>
+
+      <div class="team-stats-row">
+        <div>${spurs.ast}</div>
+        <div>Assists</div>
+        <div>${okc.ast}</div>
+      </div>
+
+      <div class="team-stats-row">
+        <div>${spurs.blk}</div>
+        <div>Blocks</div>
+        <div>${okc.blk}</div>
+      </div>
+
+      <div class="team-stats-row">
+        <div>${spurs.stl}</div>
+        <div>Steals</div>
+        <div>${okc.stl}</div>
+      </div>
+
+      <div class="team-stats-row">
+        <div>${spurs.to}</div>
+        <div>Turnovers</div>
+        <div>${okc.to}</div>
+      </div>
+
+      <div class="team-stats-row">
+        <div>${spurs.pf}</div>
+        <div>Fouls</div>
+        <div>${okc.pf}</div>
+      </div>
+
+    </div>
+  `;
+}
+
+function pickPlayer(team){
+  const roster = stats[team];
+  let message = `Choose player number:\n\n`;
+
+  roster.forEach((p,index) => {
+    message += `${index + 1}. ${p.name}\n`;
+  });
+
+  const choice = prompt(message);
+
+  if(!choice) return null;
+
+  const index = parseInt(choice) - 1;
+
+  if(index < 0 || index >= roster.length || isNaN(index)){
+    alert("Invalid player.");
+    return null;
+  }
+
+  return roster[index];
+}
+
+function addShot(team,type,result){
+  const player = pickPlayer(team);
+  if(!player) return;
+
+  saveState();
+
+  let pointsAdded = 0;
+
+  if(type === "three"){
+    player.threeA += 1;
+    player.fga += 1;
+
+    if(result === "make"){
+      pointsAdded = 3;
+      player.pts += 3;
+      player.fgm += 1;
+      player.threeM += 1;
+    }
+  }
+
+  if(type === "two"){
+    player.fga += 1;
+
+    if(result === "make"){
+      pointsAdded = 2;
+      player.pts += 2;
+      player.fgm += 1;
+    }
+  }
+
+  if(type === "ft"){
+    player.fta += 1;
+
+    if(result === "make"){
+      pointsAdded = 1;
+      player.pts += 1;
+      player.ftm += 1;
+    }
+  }
+
+  quarterPoints[team][currentQuarter - 1] += pointsAdded;
+
+  askForNewClockTime();
+  updateScore();
+  renderStatsSection();
+  saveToBrowser();
+}
+
+function chooseTeamStat(statType){
+  const teamChoice = prompt(
+`Which team?
+
+1. Spurs
+2. Thunder`
+  );
+
+  let team = null;
+
+  if(teamChoice === "1") team = "spurs";
+  if(teamChoice === "2") team = "okc";
+
+  if(!team){
+    alert("Invalid team.");
+    return;
+  }
+
+  const player = pickPlayer(team);
+  if(!player) return;
+
+  saveState();
+
+  player[statType] += 1;
+
+  askForNewClockTime();
+  renderStatsSection();
+  saveToBrowser();
+}
+
+function updateScore(){
+  const spursTotal = stats.spurs.reduce((sum,p) => sum + p.pts,0);
+  const okcTotal = stats.okc.reduce((sum,p) => sum + p.pts,0);
+
+  document.getElementById("spursScore").textContent = spursTotal;
+  document.getElementById("okcScore").textContent = okcTotal;
+
+  document.getElementById("spursTotalSmall").textContent = spursTotal;
+  document.getElementById("okcTotalSmall").textContent = okcTotal;
+
+  for(let i = 0; i < 4; i++){
+    document.getElementById(`spursQ${i + 1}`).textContent = quarterPoints.spurs[i];
+    document.getElementById(`okcQ${i + 1}`).textContent = quarterPoints.okc[i];
+  }
+}
+
+loadFromBrowser();
+renderStatsSection();
+updateScore();
+updateGameClock();
+showTeam(currentView);
+</script>
+
+</body>
+</html>
